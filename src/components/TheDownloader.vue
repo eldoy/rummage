@@ -53,16 +53,15 @@ export default {
         alert(file.error)
         this.downloading = false
       } else {
-        console.log('FILE:', file.id)
-
-        while(this.downloading) {
-          await new Promise(r => setTimeout(() => { r() }, 1000))
-          console.log('POLLING')
-          const status = await this.$store.dispatch('status', file.id)
-          console.log('RECEIVED STATUS:', status)
-          if (status.done === '100') {
-            this.downloading = false
-          }
+        this.poll(file)
+      }
+    },
+    async poll(file) {
+      while(this.downloading) {
+        await new Promise(r => setTimeout(() => { r() }, 1000))
+        const status = await this.$store.dispatch('status', file.id)
+        if (status.done === '100') {
+          this.downloading = false
         }
       }
     }
