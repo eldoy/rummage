@@ -17,15 +17,19 @@
       </div>
       <div class="button">
         <div class="message" v-if="downloading">Please wait...</div>
-        <button @click="convert()" v-else>Download</button>
+        <button @click="download()" v-else>Download</button>
       </div>
     </div>
     <div class="files" v-if="files.length">
       <h4>Files</h4>
-      <div class="file" v-for="file in files" :key="file.name">
-        <a :href="'http://localhost:3000/' + file.name" target="_blank">
-          {{ file.name }}
-        </a>
+      <div class="file" v-for="file in files" :key="file.id">
+        <template v-if="file.name">
+          <a :href="'http://localhost:3000/' + file.id + '/' + file.name" target="_blank">
+            {{ file.name }}
+          </a>
+          <span class="done">{{ file.done }}%</span>
+        </template>
+        <span v-else>Please wait, adding to queue...</span>
       </div>
     </div>
   </div>
@@ -36,16 +40,31 @@ export default {
   name: 'TheDownloader',
   data() {
     return {
-      address: '',
+      address: 'https://www.youtube.com/watch?v=07d2dXHYb94',
       format: 'music',
       downloading: false
     }
   },
   methods: {
-    async convert() {
+    async download() {
       this.downloading = true
-      await this.$store.dispatch('convert', this)
-      this.downloading = false
+      const file = await this.$store.dispatch('download', this)
+      if (file.error) {
+        alert(file.error)
+        this.downloading = false
+      } else {
+        console.log('FILE:', file.id)
+
+        while(this.downloading) {
+          await new Promise(r => setTimeout(() => { r() }, 1000))
+          console.log('POLLING')
+          const status = await this.$store.dispatch('status', file.id)
+          console.log('RECEIVED STATUS:', status)
+          if (status.done === '100') {
+            this.downloading = false
+          }
+        }
+      }
     }
   },
   computed: {
@@ -87,6 +106,9 @@ export default {
   div.files {
     margin-top: 2.5rem;
     font-size: 16px;
+    .file {
+      margin-bottom: 0.3rem;
+    }
   }
 }
 </style>

@@ -11,6 +11,9 @@ export default {
   name: 'home',
   components: {
     TheDownloader
-  }
+  },
+  async created() {
+    this.$store.dispatch('files')
+  },
 }
 </script>
